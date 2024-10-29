@@ -1,6 +1,10 @@
 <script setup>
 import { onMounted, ref } from "vue";
 import { Meteor } from "meteor/meteor";
+import { useRouter, useRoute } from "vue-router";
+
+const router = useRouter();
+const route = useRoute();
 
 const dataGet = ref([]);
 
@@ -14,12 +18,34 @@ function getData() {
     }
   });
 }
+
+function deleteProduct(id) {
+  Meteor.call("product.remove", { id: id }, (err, result) => {
+    if (result) {
+      console.log("delete success");
+      getData();
+    } else {
+      console.log(err);
+    }
+  });
+}
+
+function editProduct(id) {
+  router.push(`/form/${id}`);
+}
+
 onMounted(() => {
   getData();
 });
 </script>
 
 <template>
+  <div class="w-75 mx-auto mt-6" align="end">
+    <v-btn flat class="bg-green" to="/form">
+      <v-icon>mdi-plus</v-icon>
+      ADD
+    </v-btn>
+  </div>
   <v-card
     class="w-75 mx-auto mt-5 pa-4"
     v-for="(cat, catidx) in dataGet"
@@ -59,58 +85,28 @@ onMounted(() => {
           <p class="text-red text-h4 text-center my-2 font-weight-bold">
             {{ i.price }}$
           </p>
+          <p class="text-blue text-h6 text-center my-2 font-weight-bold">
+            {{ i.name }}
+          </p>
 
           <div v-html="i.data" class="tiptap mt-3"></div>
+
+          <v-btn
+            flat
+            class="mt-3 bg-yellow-lighten-4"
+            @click="editProduct(i._id)"
+          >
+            <v-icon> mdi-pen </v-icon>
+          </v-btn>
+          <v-btn
+            flat
+            class="mt-3 bg-red-lighten-4 ml-2"
+            @click="deleteProduct(i._id)"
+          >
+            <v-icon> mdi-delete </v-icon>
+          </v-btn>
         </v-col>
       </v-row>
     </v-card-text>
   </v-card>
 </template>
-
-<!-- 
-          <p class="font-weight-bold">- 13th Gen Intel Core i5-13420H 8C 12T</p>
-          <p>
-            - Ram : 8GB DDR5 |
-            <span class="text-red font-weight-bold">256GB M.2 PCIe 4.0</span>
-          </p>
-          <p>
-            - Display :
-            <span class="text-blue font-weight-bold"
-              >14" FHD IPS Acer ComfyView™</span
-            >
-          </p>
-          <p>
-            - VGA :
-            <span class="text-red font-weight-bold"
-              >Intel® UHD Graphics for 13th Gen</span
-            >
-          </p>
-          <p>
-            - Feature :
-            <span class="text-blue font-weight-bold"
-              >FingerPrint , Killer™ Wi-Fi 6E</span
-            >
-          </p>
-          <p>- Thunderbolt™ 4 / Backlit key / HD camera</p>
-          <p>
-            -
-            <span class="font-weight-bold">Windows 11 Pro Recommendation</span>
-          </p>
-          <p>
-            -
-            <span class="font-weight-bold text-red">50Wh Li-io battery</span>
-            3-pin 65 W AC Adapter
-          </p>
-          <p>- 1.5 Kg | Color : Blue / Gray</p>
-          <p>
-            - <span class="font-weight-bold">Code: UNTCT004A1-D10P35D25</span>
-          </p>
-          <p>-----------------------</p>
-          <p>
-            - Free :
-            <span class="font-weight-bold">Backpack, Wireless Mouse, Pad</span>
-          </p>
-          <p>
-            - Free :
-            <span class="font-weight-bold">Cleaning Kit Water</span>
-          </p> -->
