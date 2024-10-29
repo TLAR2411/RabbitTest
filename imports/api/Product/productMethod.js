@@ -92,6 +92,9 @@ Meteor.methods({
             foreignField: "_id",
             as: "categoryDetails",
           },
+        },
+
+        {
           $lookup: {
             from: "app_files",
             localField: "photoId",
@@ -103,9 +106,11 @@ Meteor.methods({
         {
           $unwind: "$categoryDetails",
         },
+
         {
           $unwind: "$photoDetails",
         },
+
         {
           $group: {
             _id: "$categoryDetails.name",
