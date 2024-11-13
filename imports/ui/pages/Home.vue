@@ -40,14 +40,16 @@ onMounted(() => {
         >
           <v-img
             class="mx-auto"
-            v-if="i.photo_path"
+            v-if="i.photoId || i.newPhotoId"
+            :height="130"
             :width="180"
-            :src="i.photo_path"
+            :src="i.url"
           ></v-img>
 
           <v-img
             class="mx-auto"
             v-else
+            :height="130"
             :width="180"
             src="https://media.istockphoto.com/id/1055079680/id/vektor/kamera-foto-linear-hitam-tidak-seperti-gambar-yang-tersedia.jpg?s=612x612&w=0&k=20&c=JwsOavJ9ghdrwbjvJTUsAUEODcVv5-SXQdxhjEsJ_V4="
           ></v-img>

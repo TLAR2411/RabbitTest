@@ -10,7 +10,7 @@ const Files = new FilesCollection({
   collectionName: "app_files",
 
   onAfterUpload(fileRef) {
-    console.log("File uploaded on server:", fileRef);
+    // console.log("File uploaded on server:", fileRef);
   },
 });
 

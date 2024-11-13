@@ -1,6 +1,7 @@
 import { Meteor } from "meteor/meteor";
 
 import Files from "./collection";
+import { Photos } from "../Product/productCollection";
 
 Meteor.methods({
   async findImageData() {
@@ -18,6 +19,7 @@ Meteor.methods({
         const fileRef = await Files.collection.findOneAsync({ _id: o._id });
 
         o.url = Files.link(fileRef, "original", url);
+        // Photos.insertAsync(o);
       }
       return images;
     }

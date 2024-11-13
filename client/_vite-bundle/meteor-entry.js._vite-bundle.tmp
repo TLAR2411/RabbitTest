@@ -11758,14 +11758,16 @@
                           key: idx
                         }, {
                           "default": withCtx(function () {
-                            return [i.photo_path ? (openBlock(), createBlock(_component_v_img, {
+                            return [i.photoId || i.newPhotoId ? (openBlock(), createBlock(_component_v_img, {
                               key: 0,
                               "class": "mx-auto",
+                              height: 130,
                               width: 180,
-                              src: i.photo_path
+                              src: i.url
                             }, null, 8, ["src"])) : (openBlock(), createBlock(_component_v_img, {
                               key: 1,
                               "class": "mx-auto",
+                              height: 130,
                               width: 180,
                               src: "https://media.istockphoto.com/id/1055079680/id/vektor/kamera-foto-linear-hitam-tidak-seperti-gambar-yang-tersedia.jpg?s=612x612&w=0&k=20&c=JwsOavJ9ghdrwbjvJTUsAUEODcVv5-SXQdxhjEsJ_V4="
                             })), createVNode(_component_v_img, {
@@ -34849,7 +34851,11 @@
   m2.helpers;
   var os$1 = {};
   var getFilePath = function () {
+<<<<<<< HEAD
     return os$1.join(os$1.homedir(), "file_uploads");
+=======
+    return path.join(osExports.homedir(), "file_uploads");
+>>>>>>> 301cf4c (up)
   };
   var Files = new FilesCollection({
     debug: false,
@@ -34857,9 +34863,7 @@
       return getFilePath();
     },
     collectionName: "app_files",
-    onAfterUpload: function (fileRef) {
-      console.log("File uploaded on server:", fileRef);
-    }
+    onAfterUpload: function (fileRef) {}
   });
   var TextEditor_vue_vue_type_style_index_0_lang = "";
   var _hoisted_1$1 = {
@@ -34872,17 +34876,17 @@
   var _hoisted_5 = ["disabled"];
   var _hoisted_6 = ["disabled"];
   var _hoisted_7 = ["value"];
-  var _hoisted_8 = ["src"];
   var _sfc_main$4 = {
     __name: "TextEditor",
     setup: function (__props) {
-      useRouter$1();
+      var router2 = useRouter$1();
       var route = useRoute$1();
       var editmode = ref(false);
       var form = ref({
         price: 0,
         data: "",
         photoId: "",
+        newPhotoId: "",
         categoryId: "",
         name: ""
       });
@@ -34913,9 +34917,7 @@
           name: ""
         };
       }
-      ref();
       var filePhotos = ref("");
-      var getfilePhotos = ref([]);
       var handleChange = function ($event) {
         var target = $event.target;
         if (target && target.files) {
@@ -34934,20 +34936,25 @@
           if (error) {
             console.log("Upload error:", error);
           } else {
-            console.log("Uploaded fileObj:", fileObj);
             console.log("end this", this.config);
-            form.value.photoId = this.config.fileId;
-            createProduct();
-          }
-        });
-      };
-      var getFileUploads = function () {
-        Meteor.call("findImageData", function (err, res) {
-          if (res) {
-            getfilePhotos.value = res;
-            console.log("get", getfilePhotos.value);
-          } else {
-            console.log(err);
+            console.log("tmpId", form.value.photoId);
+            if (form.value._id) {
+              console.log("newId", this.config.fileId);
+              Files.remove({
+                _id: form.value.photoId
+              }, function (err) {
+                if (!err) {
+                  console.log("Remove old image success");
+                } else {
+                  console.log("Remove old image error");
+                }
+              });
+              form.value.photoId = this.config.fileId;
+              updateProduct();
+            } else {
+              form.value.photoId = this.config.fileId;
+              createProduct();
+            }
           }
         });
       };
@@ -34965,6 +34972,7 @@
         form.value.price = lodash.exports.toNumber(form.value.price);
         Meteor.call("products.create", form.value, function (err, result) {
           if (result) {
+            router2.push("/admin");
             console.log("create successfully");
             resetForm();
           } else {
@@ -34978,17 +34986,37 @@
         }, function (err, result) {
           if (result) {
             form.value = result;
-            console.log(form.value);
+            console.log("findProductbyId", form.value);
+          } else {
+            console.log(err);
+          }
+        });
+      }
+      function updateProduct() {
+        form.value.price = lodash.exports.toNumber(form.value.price);
+        Meteor.call("product.update", _objectSpread({
+          _id: route.params.id
+        }, form.value), function (err, result) {
+          if (result) {
+            console.log("formValue", form.value);
+            console.log("update successfully");
+            router2.push("/admin");
           } else {
             console.log(err);
           }
         });
       }
       var submit = function () {
+        console.log("file", filePhotos.value);
+        console.log("_id ===== ", form.value._id);
         if (filePhotos.value) {
           onUploadToServer();
         } else {
-          createProduct();
+          if (editmode.value) {
+            updateProduct();
+          } else {
+            createProduct();
+          }
         }
       };
       onMounted(function () {
@@ -34997,10 +35025,8 @@
           editmode.value = true;
         }
         console.log(editmode.value);
-        getFileUploads();
+        findProductById();
       });
-      console.log(form.value.photoId);
-      findProductById();
       return function (_ctx, _cache) {
         var _component_v_icon = resolveComponent("v-icon");
         var _component_v_col = resolveComponent("v-col");
@@ -35253,14 +35279,7 @@
                 })];
               }),
               _: 1
-            }), (openBlock(true), createElementBlock(Fragment$1, null, renderList(getfilePhotos.value, function (file) {
-              return openBlock(), createElementBlock("div", {
-                key: file._id
-              }, [createBaseVNode("img", {
-                src: file.pat,
-                alt: ""
-              }, null, 8, _hoisted_8), createTextVNode(" " + toDisplayString(file.path), 1)]);
-            }), 128))];
+            })];
           }),
           _: 1
         });
@@ -35405,17 +35424,39 @@
           }
         });
       }
-      function deleteProduct(id) {
-        Meteor.call("product.remove", {
-          id: id
-        }, function (err, result) {
-          if (result) {
-            console.log("delete success");
-            getData();
-          } else {
-            console.log(err);
-          }
-        });
+      function deleteProduct(id, photoId) {
+        console.log("photoId", photoId);
+        if (photoId) {
+          Files.remove({
+            _id: photoId
+          }, function (err) {
+            if (!err) {
+              Meteor.call("product.remove", {
+                id: id
+              }, function (err2, result) {
+                if (!err2 && result) {
+                  console.log("Product deleted successfully.");
+                  getData();
+                } else {
+                  console.error("Failed to delete product:", err2);
+                }
+              });
+            } else {
+              console.error("Failed to delete photo:", err);
+            }
+          });
+        } else {
+          Meteor.call("product.remove", {
+            id: id
+          }, function (err, result) {
+            if (result) {
+              console.log("delete success");
+              getData();
+            } else {
+              console.log(err);
+            }
+          });
+        }
       }
       function editProduct(id) {
         router2.push("/form/" + id);
@@ -35474,14 +35515,16 @@
                           key: idx
                         }, {
                           "default": withCtx(function () {
-                            return [i.photo_path ? (openBlock(), createBlock(_component_v_img, {
+                            return [i.photoId ? (openBlock(), createBlock(_component_v_img, {
                               key: 0,
                               "class": "mx-auto",
+                              height: 130,
                               width: 180,
-                              src: i.photo_path
+                              src: i.url
                             }, null, 8, ["src"])) : (openBlock(), createBlock(_component_v_img, {
                               key: 1,
                               "class": "mx-auto",
+                              height: 130,
                               width: 180,
                               src: "https://media.istockphoto.com/id/1055079680/id/vektor/kamera-foto-linear-hitam-tidak-seperti-gambar-yang-tersedia.jpg?s=612x612&w=0&k=20&c=JwsOavJ9ghdrwbjvJTUsAUEODcVv5-SXQdxhjEsJ_V4="
                             })), createVNode(_component_v_img, {
@@ -35511,7 +35554,7 @@
                               flat: "",
                               "class": "mt-3 bg-red-lighten-4 ml-2",
                               onClick: function ($event) {
-                                return deleteProduct(i._id);
+                                return deleteProduct(i._id, i.photoId);
                               }
                             }, {
                               "default": withCtx(function () {

@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import { Meteor } from "meteor/meteor";
 import { useRouter, useRoute } from "vue-router";
+import FilesCollection from "../../../imports/api/files/collection";
 
 const router = useRouter();
 const route = useRoute();
@@ -19,15 +20,33 @@ function getData() {
   });
 }
 
-function deleteProduct(id) {
-  Meteor.call("product.remove", { id: id }, (err, result) => {
-    if (result) {
-      console.log("delete success");
-      getData();
-    } else {
-      console.log(err);
-    }
-  });
+function deleteProduct(id, photoId) {
+  console.log("photoId", photoId);
+  if (photoId) {
+    FilesCollection.remove({ _id: photoId }, (err) => {
+      if (!err) {
+        Meteor.call("product.remove", { id: id }, (err, result) => {
+          if (!err && result) {
+            console.log("Product deleted successfully.");
+            getData();
+          } else {
+            console.error("Failed to delete product:", err);
+          }
+        });
+      } else {
+        console.error("Failed to delete photo:", err);
+      }
+    });
+  } else {
+    Meteor.call("product.remove", { id: id }, (err, result) => {
+      if (result) {
+        console.log("delete success");
+        getData();
+      } else {
+        console.log(err);
+      }
+    });
+  }
 }
 
 function editProduct(id) {
@@ -66,14 +85,16 @@ onMounted(() => {
         >
           <v-img
             class="mx-auto"
-            v-if="i.photo_path"
+            v-if="i.photoId"
+            :height="130"
             :width="180"
-            :src="i.photo_path"
+            :src="i.url"
           ></v-img>
 
           <v-img
             class="mx-auto"
             v-else
+            :height="130"
             :width="180"
             src="https://media.istockphoto.com/id/1055079680/id/vektor/kamera-foto-linear-hitam-tidak-seperti-gambar-yang-tersedia.jpg?s=612x612&w=0&k=20&c=JwsOavJ9ghdrwbjvJTUsAUEODcVv5-SXQdxhjEsJ_V4="
           ></v-img>
@@ -101,7 +122,7 @@ onMounted(() => {
           <v-btn
             flat
             class="mt-3 bg-red-lighten-4 ml-2"
-            @click="deleteProduct(i._id)"
+            @click="deleteProduct(i._id, i.photoId)"
           >
             <v-icon> mdi-delete </v-icon>
           </v-btn>

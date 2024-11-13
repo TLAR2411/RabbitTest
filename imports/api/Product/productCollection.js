@@ -7,6 +7,10 @@ export const Products = new Mongo.Collection("products");
 const Schemas = {};
 
 Schemas.Product = new SimpleSchema({
+  _id: {
+    type: String,
+    optional: true,
+  },
   data: {
     type: String,
     required: true,
@@ -32,5 +36,9 @@ Schemas.Product = new SimpleSchema({
     type: String,
     optional: true,
   },
+  // newPhotoId: {
+  //   type: String,
+  //   optional: true,
+  // },
 });
 Products.attachSchema?.(Schemas.Product);

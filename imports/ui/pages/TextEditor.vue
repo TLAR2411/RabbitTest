@@ -14,6 +14,7 @@ import { useRoute, useRouter } from "vue-router";
 import { watch } from "vue";
 import { toNumber } from "lodash";
 import FilesCollection from "../../../imports/api/files/collection";
+
 const router = useRouter();
 const route = useRoute();
 
@@ -23,6 +24,7 @@ const form = ref({
   price: 0,
   data: "",
   photoId: "",
+  newPhotoId: "",
   categoryId: "",
   name: "",
 });
@@ -59,16 +61,13 @@ function resetForm() {
 }
 
 //photo
-const refInputEl = ref();
-
 const filePhotos = ref("");
-const getfilePhotos = ref([]);
+// const getfilePhotos = ref([]);
 
 const handleChange = ($event) => {
   const target = $event.target;
   if (target && target.files) {
     filePhotos.value = target.files[0];
-    // uploadToServer(target.files[0])
   }
 };
 
@@ -84,19 +83,38 @@ const onUploadToServer = () => {
     if (error) {
       console.log("Upload error:", error);
     } else {
-      console.log("Uploaded fileObj:", fileObj);
       console.log("end this", this.config);
-      form.value.photoId = this.config.fileId;
-      createProduct();
+      console.log("tmpId", form.value.photoId);
+      if (form.value._id) {
+        console.log("newId", this.config.fileId);
+        // Remove old image
+        // Code remove
+
+        FilesCollection.remove({ _id: form.value.photoId }, (err) => {
+          if (!err) {
+            console.log("Remove old image success");
+          } else {
+            console.log("Remove old image error");
+          }
+        });
+
+        // New doc for server
+        form.value.photoId = this.config.fileId;
+        updateProduct();
+      } else {
+        form.value.photoId = this.config.fileId;
+        createProduct();
+      }
     }
   });
 };
 
+// getfilePhoto
 const getFileUploads = () => {
   Meteor.call("findImageData", (err, res) => {
     if (res) {
       getfilePhotos.value = res;
-      console.log("get", getfilePhotos.value);
+      console.log("getfileUpoad", getfilePhotos.value);
     } else {
       console.log(err);
     }
@@ -119,7 +137,7 @@ function createProduct() {
   form.value.price = toNumber(form.value.price);
   Meteor.call("products.create", form.value, (err, result) => {
     if (result) {
-      // router.push("/admin");
+      router.push("/admin");
       console.log("create successfully");
       resetForm();
     } else {
@@ -132,18 +150,42 @@ function findProductById() {
   Meteor.call("product.findById", { id: route.params.id }, (err, result) => {
     if (result) {
       form.value = result;
-      console.log(form.value);
+      console.log("findProductbyId", form.value);
     } else {
       console.log(err);
     }
   });
 }
 
+function updateProduct() {
+  form.value.price = toNumber(form.value.price);
+  Meteor.call(
+    "product.update",
+    { _id: route.params.id, ...form.value },
+
+    (err, result) => {
+      if (result) {
+        console.log("formValue", form.value);
+        console.log("update successfully");
+        router.push("/admin");
+      } else {
+        console.log(err);
+      }
+    }
+  );
+}
+
 const submit = () => {
+  console.log("file", filePhotos.value);
+  console.log("_id ===== ", form.value._id);
   if (filePhotos.value) {
     onUploadToServer();
   } else {
-    createProduct();
+    if (editmode.value) {
+      updateProduct();
+    } else {
+      createProduct();
+    }
   }
 };
 
@@ -154,11 +196,9 @@ onMounted(() => {
   }
   console.log(editmode.value);
 
-  getFileUploads();
+  // getFileUploads();
+  findProductById();
 });
-console.log(form.value.photoId);
-
-findProductById();
 </script>
 
 <template>
@@ -410,10 +450,9 @@ findProductById();
         </v-row>
       </v-card-text>
     </v-card>
-    <div v-for="file in getfilePhotos" :key="file._id">
-      <img :src="file.pat" alt="" />
-      {{ file.path }}
-    </div>
+    <!-- <div v-for="file in getfilePhotos" :key="file._id">
+      <img :src="file.url" alt="" />
+    </div> -->
 
     <!-- <div v-html="form.data" class="tiptap"></div> -->
   </v-container>

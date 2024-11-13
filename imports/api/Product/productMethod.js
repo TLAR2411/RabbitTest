@@ -29,6 +29,10 @@ new ValidatedMethod({
       type: String,
       optional: true,
     },
+    newPhotoId: {
+      type: String,
+      optional: true,
+    },
   }).validator(),
   async run({ data, price, categoryId, create_date, name, photoId }) {
     if (Meteor.isServer) {
@@ -81,9 +85,68 @@ new ValidatedMethod({
   },
 });
 
+new ValidatedMethod({
+  name: "product.update",
+  validate: new SimpleSchema({
+    _id: {
+      type: String,
+      optional: true,
+    },
+    data: {
+      type: String,
+      min: 1,
+      optional: true,
+    },
+    name: {
+      type: String,
+      min: 1,
+      optional: true,
+    },
+    price: {
+      type: Number,
+      min: 0,
+      optional: true,
+    },
+    categoryId: {
+      type: String,
+      optional: true,
+    },
+    photoId: {
+      type: String,
+      optional: true,
+    },
+    // newPhotoId: {
+    //   type: String,
+    //   optional: true,
+    // },
+    create_date: {
+      type: Date,
+    },
+  }).validator(),
+  async run({ _id, data, name, price, categoryId, photoId, newPhotoId }) {
+    if (Meteor.isServer) {
+      console.log(_id);
+      return await Products.updateAsync(
+        { _id: _id },
+        {
+          $set: {
+            data: data,
+            name: name,
+            price: price,
+            categoryId: categoryId,
+            photoId: photoId,
+            // newPhotoId: newPhotoId,
+            create_date: new Date(),
+          },
+        }
+      );
+    }
+  },
+});
+
 Meteor.methods({
-  productJoinCategory() {
-    return Products.rawCollection()
+  async productJoinCategory() {
+    const productData = await Products.rawCollection()
       .aggregate([
         {
           $lookup: {
@@ -95,20 +158,7 @@ Meteor.methods({
         },
 
         {
-          $lookup: {
-            from: "app_files",
-            localField: "photoId",
-            foreignField: "_id",
-            as: "photoDetails",
-          },
-        },
-
-        {
           $unwind: "$categoryDetails",
-        },
-
-        {
-          $unwind: "$photoDetails",
         },
 
         {
@@ -122,7 +172,8 @@ Meteor.methods({
                 name: "$name",
                 price: "$price",
                 create_date: "$create_date",
-                photoId: "$photoDetails",
+                photoId: "$photoId",
+                newPhotoId: "$newPhotoId",
               },
             },
           },
@@ -136,5 +187,26 @@ Meteor.methods({
         },
       ])
       .toArray();
+
+    const url = Meteor.absoluteUrl();
+
+    for (let it of productData) {
+      for (let item of it.products) {
+        if (item.photoId) {
+          const fileRef = await Files.collection.findOneAsync({
+            _id: item.photoId,
+          });
+
+          item.url = Files.link(fileRef, "original", url);
+        } else if (item.newPhotoId) {
+          const fileRef = await Files.collection.findOneAsync({
+            _id: item.newPhotoId,
+          });
+          item.url = Files.link(fileRef, "original", url);
+        }
+      }
+    }
+
+    return productData;
   },
 });
